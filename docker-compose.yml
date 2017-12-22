@@ -1,0 +1,94 @@
+###############################################################################
+#                          Generated on phpdocker.io                          #
+###############################################################################
+version: "3.1"
+services:
+
+    redis:
+      image: redis:alpine
+      container_name: redis
+
+    mysql:
+      image: mysql:8.0
+      container_name: mysql
+      volumes:
+        - /d/tool/mysql:/var/lib/mysql
+      environment:
+        - MYSQL_ROOT_PASSWORD=123456
+        - MYSQL_DATABASE=app
+        - MYSQL_USER=app
+        - MYSQL_PASSWORD=123456
+      ports:
+        - "3306:3306"
+    postgresql:
+      image: centos/postgresql-96-centos7
+      container_name: postgresql
+      ports:
+        - "5432:5432"
+      environment:
+        - POSTGRESQL_USER=root
+        - POSTGRESQL_PASSWORD=123456
+        - POSTGRESQL_DATABASE=app
+        - POSTGRESQL_ADMIN_PASSWORD=123456
+      volumes:
+        - /d:/d
+        - /c:/c
+
+    php-fpm:
+      build: phpdocker/php-fpm
+      container_name: php-fpm
+      volumes:
+        - /d/wamp64/www:/etc/work
+      links:
+       - "mysql:mysql"
+       - "redis:redis"
+       - "postgresql:postgresql"
+    logstash:
+      build: logstash
+      container_name: logstash
+      volumes:
+        - /d/tool/logstash/conf.d:/etc/logstash/conf.d
+        - /d/tool/nginx/logs:/var/log/nginx
+      links:
+        - "elasticsearch:elasticsearch"
+      ports:
+        - "5045:5045"
+        - "9600:9600"
+    elasticsearch:
+      image: elasticsearch
+      container_name: elasticsearch
+      volumes:
+        - /d/tool/elasticsearch/data:/usr/share/elasticsearch/data
+      environment:
+        - cluster.name=docker-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        - "discovery.zen.ping.unicast.hosts=elasticsearch"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      ports:
+        - "9200:9200"
+        - "9300:9300"
+
+    kibana:
+      image: kibana
+      container_name: kibana
+      ports:
+        - 5601:5601
+
+    nginx:
+      image: nginx:alpine
+      container_name: nginx
+      volumes:
+          - /d/tool/nginx/conf.d:/etc/nginx/conf.d
+          - /d/tool/nginx/logs:/var/log/nginx
+          - /d/wamp64/www:/etc/work
+          - /d/tool/php7-fpm/conf.d:/usr/local/etc/php/conf.d
+      ports:
+       - "80:80"
+      links:
+       - "php-fpm:php"
+
+
