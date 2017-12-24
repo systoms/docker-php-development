@@ -4,7 +4,11 @@ services:
     redis:
       image: redis:alpine
       container_name: redis
-
+    solr:
+      image: solr:latest
+      container_name: solr
+      ports:
+        - "8983:8983"
     mysql:
       image: mysql:8.0
       container_name: mysql
@@ -40,6 +44,7 @@ services:
        - "mysql:mysql"
        - "redis:redis"
        - "postgresql:postgresql"
+       - "solr:solr"
     logstash:
       build: logstash
       container_name: logstash
